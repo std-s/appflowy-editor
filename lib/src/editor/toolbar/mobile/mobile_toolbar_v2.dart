@@ -162,6 +162,7 @@ class _MobileToolbarV2State extends State<MobileToolbarV2> {
           right: 0,
           bottom: 0,
           child: Material(
+            color: Colors.transparent,
             child: child,
           ),
         ),

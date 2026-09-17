@@ -1,10 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:appflowy_editor/src/editor/util/file_picker/file_picker_service.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 
 class FilePicker implements FilePickerService {
   @override
   Future<String?> getDirectoryPath({String? title}) {
-    return fp.FilePicker.platform.getDirectoryPath();
+    return fp.FilePicker.getDirectoryPath(dialogTitle: title);
   }
 
   @override
@@ -19,19 +21,15 @@ class FilePicker implements FilePickerService {
     bool withReadStream = false,
     bool lockParentWindow = false,
   }) async {
-    final result = await fp.FilePicker.platform.pickFiles(
+    final result = await fp.FilePicker.pickFiles(
       dialogTitle: dialogTitle,
       initialDirectory: initialDirectory,
       type: type,
       allowedExtensions: allowedExtensions,
       onFileLoading: onFileLoading,
-      allowMultiple: allowMultiple,
-      withData: withData,
-      withReadStream: withReadStream,
-      lockParentWindow: lockParentWindow,
     );
 
-    return FilePickerResult(result?.files ?? []);
+    return FilePickerResult(result);
   }
 
   @override
@@ -42,14 +40,15 @@ class FilePicker implements FilePickerService {
     fp.FileType type = fp.FileType.any,
     List<String>? allowedExtensions,
     bool lockParentWindow = false,
-  }) {
-    return fp.FilePicker.platform.saveFile(
+  }) async {
+    final uri = await fp.FilePicker.saveFile(
+      fileName: fileName ?? 'untitled',
+      bytes: Uint8List(0),
       dialogTitle: dialogTitle,
-      fileName: fileName,
       initialDirectory: initialDirectory,
       type: type,
       allowedExtensions: allowedExtensions,
-      lockParentWindow: lockParentWindow,
     );
+    return uri?.toString();
   }
 }
