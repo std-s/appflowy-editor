@@ -41,7 +41,7 @@ class DeltaMarkdownEncoder extends Converter<Delta, String> {
     } else if (attributes[BuiltInAttributeKey.bold] == true) {
       syntax += '**';
     } else if (attributes[BuiltInAttributeKey.italic] == true) {
-      syntax += '_';
+      syntax += '*';
     }
 
     if (attributes[BuiltInAttributeKey.strikethrough] == true) {
@@ -90,7 +90,7 @@ class DeltaMarkdownEncoder extends Converter<Delta, String> {
     } else if (attributes[BuiltInAttributeKey.bold] == true) {
       syntax += '**';
     } else if (attributes[BuiltInAttributeKey.italic] == true) {
-      syntax += '_';
+      syntax += '*';
     }
 
     if (attributes[BuiltInAttributeKey.formula] != null) {

@@ -32,7 +32,7 @@ void main() async {
         ],
       );
       final result = DeltaMarkdownEncoder().convert(delta);
-      expect(result, 'Welcome to _AppFlowy_');
+      expect(result, 'Welcome to *AppFlowy*');
     });
 
     test('underline', () {

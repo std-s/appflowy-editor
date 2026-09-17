@@ -307,11 +307,11 @@ void main() async {
       expect(result, '''
 ## 👋 **Welcome to** ***[AppFlowy Editor](appflowy.io)***
 
-AppFlowy Editor is a **highly customizable** _rich-text editor_
+AppFlowy Editor is a **highly customizable** *rich-text editor*
 - [x] Customizable
 - [x] Test-covered
 - [ ] more to come!
-|## a|_c_|
+|## a|*c*|
 |-|-|
 |**b**|d|
 
