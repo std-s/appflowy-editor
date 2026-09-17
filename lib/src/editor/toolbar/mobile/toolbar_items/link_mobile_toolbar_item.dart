@@ -21,9 +21,25 @@ final linkMobileToolbarItem = MobileToolbarItem.withMenu(
       linkText: linkText,
       onSubmitted: (value) async {
         if (value.isNotEmpty) {
-          await editorState.formatDelta(selection, {
-            AppFlowyRichTextKeys.href: value,
-          });
+          if (selection.isCollapsed) {
+            final node = editorState.getNodeAtPath(selection.start.path);
+            if (node != null) {
+              final transaction = editorState.transaction
+                ..insertText(
+                  node,
+                  selection.start.offset,
+                  value,
+                  attributes: {
+                    AppFlowyRichTextKeys.href: value,
+                  },
+                );
+              await editorState.apply(transaction);
+            }
+          } else {
+            await editorState.formatDelta(selection, {
+              AppFlowyRichTextKeys.href: value,
+            });
+          }
         }
         itemMenuService.closeItemMenu();
         editorState.service.keyboardService?.closeKeyboard();
