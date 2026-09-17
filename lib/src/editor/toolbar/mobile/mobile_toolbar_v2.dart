@@ -204,7 +204,6 @@ class _MobileToolbarState extends State<_MobileToolbar>
   // This is because we want to keep the same height when the menu is shown.
   bool canUpdateCachedKeyboardHeight = true;
   ValueNotifier<double> cachedKeyboardHeight = ValueNotifier(0.0);
-  ValueNotifier<double> currentKeyboardHeight = ValueNotifier(0.0);
 
   // used to check if click the same item again
   int? selectedMenuIndex;
@@ -235,7 +234,6 @@ class _MobileToolbarState extends State<_MobileToolbar>
   void dispose() {
     showMenuNotifier.dispose();
     cachedKeyboardHeight.dispose();
-    currentKeyboardHeight.dispose();
     KeyboardHeightObserver.instance.removeListener(_onKeyboardHeightChanged);
 
     super.dispose();
@@ -256,7 +254,6 @@ class _MobileToolbarState extends State<_MobileToolbar>
     //  - if the menu is shown, the toolbar will be pushed up by the height of the menu
     //  - otherwise, add a spacer to push the toolbar up when the keyboard is shown
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         _buildToolbar(context),
         _buildMenuOrSpacer(context),
@@ -274,8 +271,6 @@ class _MobileToolbarState extends State<_MobileToolbar>
   }
 
   void _onKeyboardHeightChanged(double height) {
-    currentKeyboardHeight.value = height;
-
     // if the keyboard is not closed initiative, we need to close the menu at same time
     if (!closeKeyboardInitiative &&
         cachedKeyboardHeight.value != 0 &&
@@ -284,14 +279,14 @@ class _MobileToolbarState extends State<_MobileToolbar>
       widget.editorState.selection = null;
     }
 
-    if (height > 0) {
-      var newHeight = height;
+    if (canUpdateCachedKeyboardHeight) {
+      cachedKeyboardHeight.value = height;
       if (defaultTargetPlatform == TargetPlatform.android) {
-        newHeight += MediaQuery.of(context).viewPadding.bottom;
+        if (cachedKeyboardHeight.value != 0) {
+          cachedKeyboardHeight.value +=
+              MediaQuery.of(context).viewPadding.bottom;
+        }
       }
-      cachedKeyboardHeight.value = newHeight;
-    } else if (canUpdateCachedKeyboardHeight) {
-      cachedKeyboardHeight.value = 0;
     }
 
     if (height == 0) {
@@ -398,63 +393,39 @@ class _MobileToolbarState extends State<_MobileToolbar>
   // if there's no menu, we need to add a spacer to push the toolbar up when the keyboard is shown
   Widget _buildMenuOrSpacer(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: currentKeyboardHeight,
-      builder: (context, currentHeight, ___) {
+      valueListenable: cachedKeyboardHeight,
+      builder: (_, height, ___) {
         return ValueListenableBuilder(
-          valueListenable: cachedKeyboardHeight,
-          builder: (_, cachedHeight, ___) {
-            return ValueListenableBuilder(
-              valueListenable: showMenuNotifier,
-              builder: (_, showingMenu, __) {
-                final viewInsetsBottom =
-                    MediaQuery.of(context).viewInsets.bottom;
-                final liveKeyboardHeight = max(currentHeight, viewInsetsBottom);
-
-                if (showingMenu && selectedMenuIndex != null) {
-                  final menuWidget = MobileToolbarItemMenu(
-                    editorState: widget.editorState,
-                    itemMenuBuilder: () {
-                      final menu = widget
-                          .toolbarItems[selectedMenuIndex!].itemMenuBuilder!
-                          .call(
-                        context,
-                        widget.editorState,
-                        this,
-                      );
-
-                      return menu ?? const SizedBox.shrink();
-                    },
-                  );
-
-                  if (liveKeyboardHeight > 0) {
-                    // When keyboard is active on screen (e.g. typing URL in link dialog),
-                    // the menu must sit directly above the keyboard, not underneath it.
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        menuWidget,
-                        SizedBox(height: liveKeyboardHeight),
-                      ],
-                    );
-                  } else {
-                    // When keyboard is not active (e.g. Heading/Color picker or keyboard hidden),
-                    // use cached keyboard height so the menu replaces the keyboard area smoothly.
-                    if (cachedHeight > 0) {
-                      return SizedBox(
-                        height: cachedHeight,
-                        child: menuWidget,
-                      );
-                    }
-                    return menuWidget;
-                  }
-                }
-
-                // Normal typing (no menu): push toolbar above active keyboard
-                final spacerHeight = max(cachedHeight, liveKeyboardHeight);
-                return SizedBox(
-                  height: spacerHeight,
+          valueListenable: showMenuNotifier,
+          builder: (_, showingMenu, __) {
+            var keyboardHeight = height;
+            if (defaultTargetPlatform == TargetPlatform.android) {
+              if (!showingMenu) {
+                keyboardHeight = max(
+                  keyboardHeight,
+                  MediaQuery.of(context).viewInsets.bottom,
                 );
-              },
+              }
+            }
+
+            return SizedBox(
+              height: keyboardHeight,
+              child: (showingMenu && selectedMenuIndex != null)
+                  ? MobileToolbarItemMenu(
+                      editorState: widget.editorState,
+                      itemMenuBuilder: () {
+                        final menu = widget
+                            .toolbarItems[selectedMenuIndex!].itemMenuBuilder!
+                            .call(
+                          context,
+                          widget.editorState,
+                          this,
+                        );
+
+                        return menu ?? const SizedBox.shrink();
+                      },
+                    )
+                  : const SizedBox.shrink(),
             );
           },
         );
